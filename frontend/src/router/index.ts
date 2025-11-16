@@ -83,6 +83,14 @@ const routes: RouteRecordRaw[] = [
     }
   },
   {
+    path: '/knowledge',
+    name: 'Knowledge',
+    component: () => import('@/views/Knowledge.vue'),
+    meta: {
+      title: '知识库管理'
+    }
+  },
+  {
     path: '/settings',
     name: 'Settings',
     component: () => import('@/views/Settings.vue'),
