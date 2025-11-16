@@ -68,6 +68,11 @@ class GenerateFromTemplateRequest(BaseModel):
     template_id: str
     variables: Dict[str, Any]
 
+class AutoFillTemplateRequest(BaseModel):
+    template_id: str
+    tender_content: Optional[str] = None  # 招标文档内容
+    use_knowledge: bool = True  # 是否使用知识库增强
+
 class GenerateOutlineRequest(BaseModel):
     topic: str
     key_points: Optional[str] = None
@@ -755,6 +760,128 @@ async def get_template_variables(template_id: str = None):
             'data': {'variables': []}
         }
 
+@app.post('/api/v1/template/auto-fill')
+async def auto_fill_template_variables(request: AutoFillTemplateRequest):
+    """AI自动填充模板变量"""
+    try:
+        if not DOCX_AVAILABLE:
+            raise HTTPException(status_code=500, detail="模板功能不可用：需要安装python-docx")
+
+        # 1. 获取模板
+        template_files = list(TEMPLATES_DIR.glob("*.docx"))
+        template_idx = int(request.template_id) - 1
+
+        if template_idx < 0 or template_idx >= len(template_files):
+            raise HTTPException(status_code=404, detail="模板不存在")
+
+        template_path = str(template_files[template_idx])
+
+        # 2. 提取模板变量
+        variables = extract_variables_from_template(template_path)
+        variable_names = [v['name'] for v in variables]
+
+        # 3. 构建AI提示词
+        prompt = f"""请根据以下信息，为投标模板自动填充变量值。
+
+模板需要填充的变量：
+{json.dumps(variable_names, ensure_ascii=False, indent=2)}
+
+"""
+
+        # 添加招标文档内容
+        if request.tender_content:
+            prompt += f"""招标文档内容：
+{request.tender_content[:2000]}
+
+"""
+
+        # 添加知识库内容
+        knowledge_context = ""
+        if request.use_knowledge:
+            # 搜索相关知识
+            search_query = " ".join(variable_names[:3])  # 用前3个变量名搜索
+            kb_results = knowledge_base.search(search_query, top_k=3)
+            if kb_results:
+                knowledge_context = "\n知识库参考内容：\n"
+                for result in kb_results:
+                    knowledge_context += f"\n【{result['title']}】\n{result['content'][:300]}\n"
+                prompt += knowledge_context
+
+        prompt += """
+请为每个变量生成合适的值。要求：
+1. 如果招标文档中有明确信息，直接使用
+2. 如果知识库中有相关信息，参考使用
+3. 如果没有具体信息，生成合理的默认值
+4. 返回JSON格式，键为变量名，值为填充内容
+
+返回格式示例：
+{
+  "project_name": "智能建筑监控系统项目",
+  "company_name": "XX科技有限公司",
+  "bidder": "张三"
+}
+"""
+
+        # 4. 调用AI生成
+        ai_result = call_zhipu_ai(
+            prompt,
+            system_prompt='你是一个专业的投标文档助手，擅长根据招标信息自动填充模板变量。请直接返回JSON格式的结果，不要添加额外说明。',
+            max_tokens=2000
+        )
+
+        if not ai_result['success']:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"AI填充失败: {ai_result.get('error')}"
+            )
+
+        # 5. 解析AI返回的JSON
+        ai_content = ai_result['content'].strip()
+
+        # 提取JSON（AI可能返回带代码块的内容）
+        if '```json' in ai_content:
+            ai_content = ai_content.split('```json')[1].split('```')[0].strip()
+        elif '```' in ai_content:
+            ai_content = ai_content.split('```')[1].split('```')[0].strip()
+
+        try:
+            filled_variables = json.loads(ai_content)
+        except json.JSONDecodeError:
+            # 如果解析失败，尝试提取大括号内的内容
+            import re
+            json_match = re.search(r'\{[^}]+\}', ai_content, re.DOTALL)
+            if json_match:
+                filled_variables = json.loads(json_match.group())
+            else:
+                filled_variables = {}
+
+        # 6. 补充缺失的变量（使用默认值）
+        for var in variables:
+            var_name = var['name']
+            if var_name not in filled_variables:
+                filled_variables[var_name] = f"[待填写: {var['label']}]"
+
+        return {
+            'code': 200,
+            'message': 'success',
+            'data': {
+                'template_id': request.template_id,
+                'variables': variables,
+                'filled_values': filled_variables,
+                'ai_confidence': 'high' if request.tender_content else 'medium',
+                'knowledge_used': request.use_knowledge and len(knowledge_context) > 0,
+                'tokens_used': ai_result.get('usage', {}).get('total_tokens', 0)
+            }
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f'自动填充失败: {str(e)}'
+        )
+
 @app.post('/api/v1/template/generate-from-template')
 async def generate_from_template_endpoint(request: GenerateFromTemplateRequest):
     """基于模板生成文档"""
@@ -869,6 +996,7 @@ async def api_root():
                 '/api/v1/knowledge/search',
                 '/api/v1/template/list',
                 '/api/v1/template/variables',
+                '/api/v1/template/auto-fill',
                 '/api/v1/template/generate-from-template',
                 '/api/v1/template/upload'
             ]
