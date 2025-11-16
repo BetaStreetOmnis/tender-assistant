@@ -166,7 +166,34 @@ class SimpleKnowledgeBase:
 
     def get_all_documents(self) -> List[Dict[str, Any]]:
         """获取所有文档"""
-        return self.index["documents"]
+        documents = []
+        for doc in self.index["documents"]:
+            doc_file = Path(doc["file"])
+            if doc_file.exists():
+                try:
+                    with open(doc_file, 'r', encoding='utf-8') as f:
+                        content = f.read()
+
+                    # 确保返回前端需要的所有字段
+                    documents.append({
+                        "id": doc["id"],
+                        "title": doc["title"],
+                        "category": doc["category"],
+                        "content": content,  # 添加内容字段
+                        "size": len(content),  # 添加大小字段
+                        "created_at": doc["created_at"]
+                    })
+                except Exception:
+                    # 如果文件读取失败，仍然返回基本信息
+                    documents.append({
+                        "id": doc["id"],
+                        "title": doc["title"],
+                        "category": doc["category"],
+                        "content": "",  # 空内容
+                        "size": 0,
+                        "created_at": doc["created_at"]
+                    })
+        return documents
 
     def delete_document(self, doc_id: str) -> bool:
         """删除文档"""
@@ -610,8 +637,9 @@ async def upload_knowledge(request: KnowledgeUploadRequest):
             'code': 200,
             'message': 'success',
             'data': {
-                'doc_id': doc_id,
+                'id': doc_id,  # 改为 'id' 以匹配前端期望
                 'title': request.title,
+                'category': request.category or "通用",
                 'created_at': datetime.now().isoformat()
             }
         }
@@ -622,16 +650,23 @@ async def upload_knowledge(request: KnowledgeUploadRequest):
         )
 
 @app.get('/api/v1/knowledge/list')
-async def list_knowledge():
+async def list_knowledge(page: int = 1, page_size: int = 20):
     """获取知识库列表"""
     try:
         docs = knowledge_base.get_all_documents()
+        # 支持分页
+        start = (page - 1) * page_size
+        end = start + page_size
+        paginated_docs = docs[start:end]
+
         return {
             'code': 200,
             'message': 'success',
             'data': {
-                'documents': docs,
-                'total': len(docs)
+                'items': paginated_docs,
+                'total': len(docs),
+                'page': page,
+                'page_size': page_size
             }
         }
     except Exception as e:
