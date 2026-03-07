@@ -1,131 +1,162 @@
-# AI标书助理系统
+<div align="center">
 
-**Tender Assistant** - 基于AI的智能招投标文档管理系统
+# 🏢 AI 标书助理
 
-## 项目概述
+**智能招投标文档管理平台** — 让 AI 帮你搞定标书
 
-AI标书助理系统是一个基于人工智能技术的招投标文档管理平台，集成了知识库管理、文档智能生成、投标检查等核心功能。
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.8+-green.svg)](https://www.python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green.svg)](https://fastapi.tiangolo.com)
+[![Vue](https://img.shields.io/badge/Vue-3.4+-green.svg)](https://vuejs.org)
 
-### 核心功能
-
-- 📄 **招标文件智能解析**：自动提取招标文件关键信息
-- 🔍 **智能检索与问答**：基于RAG的智能问答系统
-- 📝 **投标文档自动生成**：AI辅助生成投标响应文档
-- ✅ **智能检查引擎**：废标项检查、一致性检查、完整性检查
-- 📚 **模板管理系统**：投标模板库管理与复用
-- 🎯 **知识图谱查询**：实体关系查询与分析
-
-### 技术架构
-
-- **后端**：FastAPI + SQLAlchemy + Celery
-- **前端**：Vue 3 + TypeScript + Ant Design Vue
-- **数据库**：PostgreSQL + Redis + Milvus + Neo4j（可选）
-- **AI能力**：LLM集成（支持通义千问、Deepseek等）
-
-## 快速开始
-
-### 环境要求
-
-- Python 3.8+
-- Node.js 16+
-- PostgreSQL 12+
-- Redis 6+
-- （可选）Milvus 2.0+
-- （可选）Neo4j 4.0+
-
-### 后端安装
-
-```bash
-cd backend
-pip install -r requirements.txt
-
-# 配置环境变量
-cp .env.example .env
-# 编辑 .env 文件
-
-# 初始化数据库
-python scripts/init_db.py
-
-# 启动服务
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-### 前端安装
-
-```bash
-cd frontend
-npm install
-
-# 启动开发服务器
-npm run dev
-```
-
-## 项目结构
-
-```
-tender-assistant/
-├── backend/                # 后端服务
-│   ├── app/
-│   │   ├── api/           # API路由
-│   │   ├── knowledge/     # 知识库模块（JetLinks复用85%）
-│   │   ├── docgen/        # 文档生成模块（DocuGen复用70%）
-│   │   ├── business/      # 业务逻辑模块（新开发）
-│   │   ├── models/        # 数据模型
-│   │   └── services/      # 业务服务
-│   └── storage/           # 文件存储
-├── frontend/              # 前端应用
-│   └── src/
-│       ├── views/         # 页面组件
-│       └── components/    # 通用组件
-├── docs/                  # 文档
-└── scripts/               # 脚本
-```
-
-## 核心模块
-
-### 知识库模块（Knowledge）
-基于JetLinks-Knowledge，提供：
-- 多模态文档解析（PDF/Word/图片）
-- 9种智能搜索模式
-- 向量检索与知识图谱
-- RAG检索增强生成
-
-### 文档生成模块（DocGen）
-基于DocuGen改进，提供：
-- 模板管理与变量替换
-- AI大纲与内容生成
-- Word文档格式化输出
-- 流式内容生成
-
-### 业务逻辑模块（Business）
-新开发，提供：
-- 招标项目管理
-- 投标响应管理
-- 智能检查引擎
-- 工作流管理
-
-## 开发计划
-
-- ✅ Phase 1: 基础架构搭建（2周）
-- ⏳ Phase 2: 核心功能开发（6周）
-- ⏳ Phase 3: 智能功能开发（4周）
-- ⏳ Phase 4: 完善优化部署（2周）
-
-## 文档
-
-- [完整实施方案](../AI标书助理系统-完整实施方案.md)
-- [代码库分析报告](../标书助理系统-代码库分析报告.md)
-- [API文档](docs/api.md)
-- [架构文档](docs/architecture.md)
-
-## 许可证
-
-MIT License
-
-## 联系方式
-
-如有问题，请提交 Issue 或联系开发团队。
+</div>
 
 ---
 
-**⭐ 如果这个项目对你有帮助，请给个 Star！**# tender-assistant
+## ✨ 核心功能
+
+| 功能 | 描述 |
+|------|------|
+| 📄 **招标文件解析** | 自动提取招标文件关键信息（截止时间、资质要求、评分标准） |
+| 🤖 **AI 智能问答** | 基于招标文档，回答任何问题（RAG） |
+| 📝 **投标文档生成** | AI 辅助生成投标响应文档 |
+| ✅ **智能检查** | 废标项检查、一致性检查、完整性检查 |
+| 📚 **模板管理** | 投标模板库管理与复用 |
+| 🔍 **知识图谱** | 招标实体关系查询（可选） |
+
+---
+
+## 🚀 快速开始
+
+### 环境要求
+
+| 组件 | 版本 | 必需 |
+|------|------|------|
+| Python | 3.8+ | ✅ |
+| Node.js | 16+ | ✅ |
+| PostgreSQL | 12+ | ✅ |
+| Redis | 6+ | ✅ |
+| Milvus | 2.0+ | 可选 |
+| Neo4j | 4.0+ | 可选 |
+
+### 一键启动（开发模式）
+
+```bash
+# 克隆项目
+git clone https://github.com/BetaStreetOmnis/tender-assistant.git
+cd tender-assistant
+
+# 后端
+cd backend
+pip install -r requirements.txt
+cp .env.example .env
+# 编辑 .env 配置数据库和 AI API
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+# 前端（另一个终端）
+cd frontend
+npm install
+npm run dev
+```
+
+访问 http://localhost:5173
+
+---
+
+## 🏗 项目结构
+
+```
+tender-assistant/
+├── backend/                 # FastAPI 后端
+│   ├── app/
+│   │   ├── api/v1/         # API 路由
+│   │   ├── knowledge/      # 知识库（JetLinks 复用 85%）
+│   │   ├── docgen/         # 文档生成（DocuGen 复用 70%）
+│   │   ├── business/       # 标书业务逻辑
+│   │   ├── models/         # 数据模型
+│   │   └── services/       # 业务服务
+│   └── storage/            # 文件存储
+├── frontend/                # Vue 3 前端
+│   └── src/
+│       ├── views/          # 页面
+│       └── components/     # 组件
+├── docs/                   # 文档
+└── scripts/               # 脚本
+```
+
+---
+
+## 🔧 配置
+
+### 环境变量（`.env`）
+
+```bash
+# 数据库
+DATABASE_URL=postgresql://user:pass@localhost:5432/tender_assistant
+REDIS_URL=redis://localhost:6379/0
+
+# AI 模型（选择一个）
+OPENAI_API_KEY=sk-xxx
+DASHSCOPE_API_KEY=xxx  # 通义千问
+DEEPSEEK_API_KEY=xxx    # DeepSeek
+
+# 向量数据库（可选）
+MILVUS_HOST=localhost
+MILVUS_PORT=19530
+```
+
+---
+
+## 📖 API 文档
+
+启动后访问：http://localhost:8000/docs
+
+### 主要端点
+
+| 方法 | 路径 | 描述 |
+|------|------|------|
+| POST | `/api/v1/tender/upload` | 上传招标文件 |
+| GET | `/api/v1/tender/{id}` | 获取招标详情 |
+| POST | `/api/v1/bidding/generate` | 生成投标文档 |
+| POST | `/api/v1/check` | 智能检查 |
+| POST | `/api/v1/chat` | AI 问答 |
+
+---
+
+## 🗺️ 开发路线图
+
+- [x] Phase 1: 基础架构
+- [x] Phase 2: 文档解析 + 知识库
+- [ ] Phase 3: 投标文档生成
+- [ ] Phase 4: 智能检查引擎
+- [ ] Phase 5: 前端界面优化
+- [ ] Phase 6: 部署 & Docker
+
+---
+
+## 🤝 贡献
+
+欢迎贡献！请查看 [CONTRIBUTING.md](CONTRIBUTING.md)
+
+---
+
+## 📄 许可证
+
+[MIT License](LICENSE)
+
+---
+
+## 📞 联系
+
+- 提交 [Issue](https://github.com/BetaStreetOmnis/tender-assistant/issues)
+- Pull Request 欢迎！
+
+---
+
+<div align="center">
+
+**⭐ 如果觉得有用，给个 Star！⭐**
+
+Made with ❤️ by BetaStreetOmnis
+
+</div>
