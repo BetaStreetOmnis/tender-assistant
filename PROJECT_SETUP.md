@@ -1,5 +1,7 @@
 # AI标书助理系统 - 项目配置与启动指南
 
+> Redis 地址为本地部署示例。生产环境请填写实际 Redis 主机和端口；旧 `1.14.62.40:26739` 的迁移尚未验收，不能作为通用默认配置。
+
 ## 📋 项目概述
 
 AI标书助理系统是一个基于FastAPI + Vue3的智能投标文档生成平台，集成DocuGen功能，提供招标文档分析、投标大纲生成、完整文档AI生成等功能。
@@ -36,8 +38,8 @@ DB_NAME=tender_assistant
 ### Redis配置
 ```env
 # Redis配置
-REDIS_HOST=1.14.62.40
-REDIS_PORT=26739
+REDIS_HOST=127.0.0.1
+REDIS_PORT=6379
 REDIS_PASSWORD=3676860
 REDIS_DB=0
 ```
